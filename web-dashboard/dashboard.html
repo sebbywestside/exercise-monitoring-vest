@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercise Monitoring Vest - Real-Time Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 24px;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e74c3c;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.connected {
+            background: #27ae60;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .metric-icon {
+            font-size: 36px;
+            margin-bottom: 15px;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .metric-value {
+            font-size: 56px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .metric-unit {
+            font-size: 14px;
+            color: #95a5a6;
+            font-weight: 500;
+        }
+
+        .heart-rate .metric-value { color: #e74c3c; }
+        .breathing-rate .metric-value { color: #3498db; }
+        .sweat-level .metric-value { color: #f39c12; }
+        .session-time .metric-value { color: #9b59b6; font-size: 36px; }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-title {
+            font-size: 18px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+        }
+
+        .alert-box {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: 500;
+        }
+
+        .alert:last-child {
+            margin-bottom: 0;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .controls {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .stats-summary {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        @media (max-width: 768px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .metric-value {
+                font-size: 42px;
+            }
+
+            header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏃 Exercise Monitoring Vest Dashboard</h1>
+            <div class="connection-status">
+                <span class="status-indicator" id="status-indicator"></span>
+                <span id="status-text">Disconnected</span>
+            </div>
+        </header>
+
+        <div class="alert-box">
+            <div class="alert alert-warning" id="main-alert">
+                <span>⚠️</span>
+                <span>Waiting for connection to WebSocket server...</span>
+            </div>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card heart-rate">
+                <div class="metric-icon">❤️</div>
+                <div class="metric-label">Heart Rate</div>
+                <div class="metric-value" id="hr-value">--</div>
+                <div class="metric-unit">BPM</div>
+            </div>
+
+            <div class="metric-card breathing-rate">
+                <div class="metric-icon">🫁</div>
+                <div class="metric-label">Breathing Rate</div>
+                <div class="metric-value" id="rr-value">--</div>
+                <div class="metric-unit">BPM</div>
+            </div>
+
+            <div class="metric-card sweat-level">
+                <div class="metric-icon">💧</div>
+                <div class="metric-label">Sweat Level</div>
+                <div class="metric-value" id="sweat-value">--</div>
+                <div class="metric-unit">0-3 Scale</div>
+            </div>
+
+            <div class="metric-card session-time">
+                <div class="metric-icon">⏱️</div>
+                <div class="metric-label">Session Time</div>
+                <div class="metric-value" id="time-value">00:00:00</div>
+                <div class="metric-unit">HH:MM:SS</div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-title">Heart Rate Trend</div>
+                <div class="chart-container">
+                    <canvas id="hr-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-title">Breathing Rate Trend</div>
+                <div class="chart-container">
+                    <canvas id="rr-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-title">Sweat Level Trend</div>
+                <div class="chart-container">
+                    <canvas id="sweat-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-title">Combined Vital Signs</div>
+                <div class="chart-container">
+                    <canvas id="combined-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-summary">
+            <h3>Session Statistics</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">Avg HR</div>
+                    <div class="stat-value" id="avg-hr">--</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Max HR</div>
+                    <div class="stat-value" id="max-hr">--</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Min HR</div>
+                    <div class="stat-value" id="min-hr">--</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Avg RR</div>
+                    <div class="stat-value" id="avg-rr">--</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Samples</div>
+                    <div class="stat-value" id="sample-count">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Duration</div>
+                    <div class="stat-value" id="duration">0m</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-primary" onclick="toggleRecording()" id="record-btn">
+                Start Recording
+            </button>
+            <button class="btn-success" onclick="exportData()">
+                Export Data (CSV)
+            </button>
+            <button class="btn-danger" onclick="clearData()">
+                Clear Data
+            </button>
+            <button class="btn-primary" onclick="takeSnapshot()">
+                Take Snapshot
+            </button>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <script>
+        // WebSocket connection
+        let ws;
+        const WS_URL = 'ws://localhost:8765';
+        let reconnectInterval = 5000;
+        let isRecording = false;
+        let recordingData = [];
+        let sessionStartTime = null;
+        let dataHistory = [];
+        let statsData = { hr: [], rr: [], sweat: [] };
+
+        // Chart configuration
+        const chartConfig = {
+            type: 'line',
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        display: false
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        };
+
+        // Initialize charts
+        const hrChart = new Chart(document.getElementById('hr-chart'), {
+            ...chartConfig,
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Heart Rate',
+                    data: [],
+                    borderColor: '#e74c3c',
+                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 2,
+                    fill: true
+                }]
+            },
+            options: {
+                ...chartConfig.options,
+                scales: {
+                    ...chartConfig.options.scales,
+                    y: {
+                        ...chartConfig.options.scales.y,
+                        min: 40,
+                        max: 200
+                    }
+                }
+            }
+        });
+
+        const rrChart = new Chart(document.getElementById('rr-chart'), {
+            ...chartConfig,
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Breathing Rate',
+                    data: [],
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 2,
+                    fill: true
+                }]
+            },
+            options: {
+                ...chartConfig.options,
+                scales: {
+                    ...chartConfig.options.scales,
+                    y: {
+                        ...chartConfig.options.scales.y,
+                        min: 0,
+                        max: 40
+                    }
+                }
+            }
+        });
+
+        const sweatChart = new Chart(document.getElementById('sweat-chart'), {
+            ...chartConfig,
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Sweat Level',
+                    data: [],
+                    borderColor: '#f39c12',
+                    backgroundColor: 'rgba(243, 156, 18, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 2,
+                    fill: true,
+                    stepped: true
+                }]
+            },
+            options: {
+                ...chartConfig.options,
+                scales: {
+                    ...chartConfig.options.scales,
+                    y: {
+                        ...chartConfig.options.scales.y,
+                        min: 0,
+                        max: 3,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+
+        const combinedChart = new Chart(document.getElementById('combined-chart'), {
+            ...chartConfig,
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'HR (normalized)',
+                        data: [],
+                        borderColor: '#e74c3c',
+                        tension: 0.4,
+                        borderWidth: 2,
+                        fill: false
+                    },
+                    {
+                        label: 'RR (normalized)',
+                        data: [],
+                        borderColor: '#3498db',
+                        tension: 0.4,
+                        borderWidth: 2,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                ...chartConfig.options,
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                },
+                scales: {
+                    ...chartConfig.options.scales,
+                    y: {
+                        ...chartConfig.options.scales.y,
+                        min: 0,
+                        max: 100
+                    }
+                }
+            }
+        });
+
+        function connectWebSocket() {
+            console.log('Attempting to connect to WebSocket...');
+            ws = new WebSocket(WS_URL);
+
+            ws.onopen = () => {
+                console.log('Connected to WebSocket server');
+                updateConnectionStatus(true);
+                updateAlert('success', '✅ Connected to Exercise Vest');
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    updateDashboard(data);
+                } catch (e) {
+                    console.error('Error parsing data:', e);
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onclose = () => {
+                console.log('Disconnected from WebSocket server');
+                updateConnectionStatus(false);
+                updateAlert('warning', '⚠️ Connection lost. Attempting to reconnect...');
+                setTimeout(connectWebSocket, reconnectInterval);
+            };
+        }
+
+        function updateConnectionStatus(connected) {
+            const indicator = document.getElementById('status-indicator');
+            const text = document.getElementById('status-text');
+
+            if (connected) {
+                indicator.classList.add('connected');
+                text.textContent = 'Connected';
+            } else {
+                indicator.classList.remove('connected');
+                text.textContent = 'Disconnected';
+            }
+        }
+
+        function updateAlert(type, message) {
+            const alert = document.getElementById('main-alert');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = `<span>${message.split(' ')[0]}</span><span>${message.substring(message.indexOf(' ') + 1)}</span>`;
+        }
+
+        function updateDashboard(data) {
+            const timestamp = new Date().toLocaleTimeString();
+
+            // Update metric cards
+            document.getElementById('hr-value').textContent = data.hr || '--';
+            document.getElementById('rr-value').textContent = data.rr || '--';
+            document.getElementById('sweat-value').textContent = getSweatText(data.sweat);
+
+            // Update session time
+            if (sessionStartTime) {
+                const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+                document.getElementById('time-value').textContent = formatTime(elapsed);
+            }
+
+            // Update charts
+            updateChart(hrChart, timestamp, data.hr);
+            updateChart(rrChart, timestamp, data.rr);
+            updateChart(sweatChart, timestamp, data.sweat);
+
+            // Update combined chart (normalized)
+            updateCombinedChart(timestamp, data.hr, data.rr);
+
+            // Update statistics
+            updateStatistics(data);
+
+            // Check for alerts
+            checkAlerts(data);
+
+            // Store data if recording
+            if (isRecording) {
+                recordingData.push({
+                    timestamp: new Date().toISOString(),
+                    ...data
+                });
+            }
+
+            // Store in history
+            dataHistory.push({
+                timestamp: Date.now(),
+                ...data
+            });
+
+            // Keep last 1000 samples
+            if (dataHistory.length > 1000) {
+                dataHistory.shift();
+            }
+        }
+
+        function updateChart(chart, label, value) {
+            const maxDataPoints = 60;
+
+            chart.data.labels.push(label);
+            chart.data.datasets[0].data.push(value);
+
+            if (chart.data.labels.length > maxDataPoints) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+            }
+
+            chart.update('none');
+        }
+
+        function updateCombinedChart(label, hr, rr) {
+            const maxDataPoints = 60;
+
+            // Normalize HR (40-200) and RR (0-40) to 0-100 scale
+            const normalizedHR = ((hr - 40) / (200 - 40)) * 100;
+            const normalizedRR = (rr / 40) * 100;
+
+            combinedChart.data.labels.push(label);
+            combinedChart.data.datasets[0].data.push(normalizedHR);
+            combinedChart.data.datasets[1].data.push(normalizedRR);
+
+            if (combinedChart.data.labels.length > maxDataPoints) {
+                combinedChart.data.labels.shift();
+                combinedChart.data.datasets[0].data.shift();
+                combinedChart.data.datasets[1].data.shift();
+            }
+
+            combinedChart.update('none');
+        }
+
+        function updateStatistics(data) {
+            if (data.hr > 0) statsData.hr.push(data.hr);
+            if (data.rr > 0) statsData.rr.push(data.rr);
+            statsData.sweat.push(data.sweat);
+
+            // Calculate statistics
+            if (statsData.hr.length > 0) {
+                const avgHR = Math.round(statsData.hr.reduce((a, b) => a + b) / statsData.hr.length);
+                const maxHR = Math.max(...statsData.hr);
+                const minHR = Math.min(...statsData.hr);
+
+                document.getElementById('avg-hr').textContent = avgHR;
+                document.getElementById('max-hr').textContent = maxHR;
+                document.getElementById('min-hr').textContent = minHR;
+            }
+
+            if (statsData.rr.length > 0) {
+                const avgRR = Math.round(statsData.rr.reduce((a, b) => a + b) / statsData.rr.length);
+                document.getElementById('avg-rr').textContent = avgRR;
+            }
+
+            document.getElementById('sample-count').textContent = dataHistory.length;
+
+            if (sessionStartTime) {
+                const minutes = Math.floor((Date.now() - sessionStartTime) / 60000);
+                document.getElementById('duration').textContent = minutes + 'm';
+            }
+        }
+
+        function checkAlerts(data) {
+            if (data.leadOff) {
+                updateAlert('error', '🚨 ECG leads disconnected! Check connections.');
+                return;
+            }
+
+            if (data.hr > 180) {
+                updateAlert('warning', '⚠️ High heart rate detected!');
+                return;
+            }
+
+            if (data.hr < 40 && data.hr > 0) {
+                updateAlert('warning', '⚠️ Low heart rate detected!');
+                return;
+            }
+
+            updateAlert('success', '✅ All systems normal');
+        }
+
+        function getSweatText(level) {
+            const texts = ['Dry', 'Low', 'Medium', 'High'];
+            return texts[level] || '--';
+        }
+
+        function formatTime(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        function toggleRecording() {
+            isRecording = !isRecording;
+            const btn = document.getElementById('record-btn');
+
+            if (isRecording) {
+                sessionStartTime = Date.now();
+                recordingData = [];
+                btn.textContent = 'Stop Recording';
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-danger');
+            } else {
+                btn.textContent = 'Start Recording';
+                btn.classList.remove('btn-danger');
+                btn.classList.add('btn-primary');
+                if (recordingData.length > 0) {
+                    exportData();
+                }
+            }
+        }
+
+        function exportData() {
+            const data = isRecording ? recordingData : dataHistory;
+
+            if (data.length === 0) {
+                alert('No data to export');
+                return;
+            }
+
+            let csv = 'Timestamp,Heart Rate,Breathing Rate,Sweat Level\n';
+            data.forEach(entry => {
+                csv += `${entry.timestamp},${entry.hr || ''},${entry.rr || ''},${entry.sweat || ''}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `exercise_data_${Date.now()}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+
+            console.log(`Exported ${data.length} samples`);
+        }
+
+        function clearData() {
+            if (confirm('Clear all data? This cannot be undone.')) {
+                dataHistory = [];
+                statsData = { hr: [], rr: [], sweat: [] };
+                sessionStartTime = null;
+
+                // Clear charts
+                [hrChart, rrChart, sweatChart, combinedChart].forEach(chart => {
+                    chart.data.labels = [];
+                    chart.data.datasets.forEach(dataset => dataset.data = []);
+                    chart.update();
+                });
+
+                // Reset stats
+                document.getElementById('avg-hr').textContent = '--';
+                document.getElementById('max-hr').textContent = '--';
+                document.getElementById('min-hr').textContent = '--';
+                document.getElementById('avg-rr').textContent = '--';
+                document.getElementById('sample-count').textContent = '0';
+                document.getElementById('duration').textContent = '0m';
+                document.getElementById('time-value').textContent = '00:00:00';
+            }
+        }
+
+        function takeSnapshot() {
+            const snapshot = {
+                timestamp: new Date().toISOString(),
+                hr: document.getElementById('hr-value').textContent,
+                rr: document.getElementById('rr-value').textContent,
+                sweat: document.getElementById('sweat-value').textContent,
+                stats: {
+                    avgHR: document.getElementById('avg-hr').textContent,
+                    maxHR: document.getElementById('max-hr').textContent,
+                    minHR: document.getElementById('min-hr').textContent,
+                    avgRR: document.getElementById('avg-rr').textContent
+                }
+            };
+
+            console.log('Snapshot taken:', snapshot);
+            
+            const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `snapshot_${Date.now()}.json`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Initialize connection
+        connectWebSocket();
+    </script>
+</body>
+</html>

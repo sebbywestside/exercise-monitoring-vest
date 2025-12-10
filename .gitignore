@@ -1,0 +1,25 @@
+# Arduino
+*.hex
+*.eep
+*.elf
+*.o
+*.su
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# IDEs
+.vscode/
+.idea/
+
+# Test Data
+data/test_*
+data/SESSION_*/
+
+# Logs
+*.log
+logs/
