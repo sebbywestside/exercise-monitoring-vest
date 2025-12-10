@@ -2,15 +2,10 @@
 
 A wearable real-time monitoring system for cardiovascular and respiratory metrics during exercise. Built with Arduino Mega 2560, featuring ECG heart rate monitoring, respiratory rate tracking, and galvanic skin response (sweat) detection.
 
-![Project Status](https://img.shields.io/badge/status-active-success.svg)
-![Arduino](https://img.shields.io/badge/arduino-mega%202560-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-
 ## 🎯 Project Overview
 
 **Course:** BEng/MEng Biomedical Engineering - Mechatronics Module  
 **Team:** Sebastian, Fawziyah Sheikhomar, Shuo Tao, Zhiyang Ma  
-**Institution:** [Your University Name]
 
 ### Key Features
 
@@ -65,25 +60,6 @@ exercise-monitoring-vest/
 ├── LICENSE
 └── README.md                  # This file
 ```
-
-## 🚀 Quick Start
-
-### Hardware Requirements
-
-| Component | Quantity | Purpose |
-|-----------|----------|---------|
-| Arduino Mega 2560 | 1 | Main microcontroller |
-| AD8232 ECG Module | 1 | Heart rate monitoring |
-| Conductive Rubber Tube | 1 | Breathing detection |
-| GSR Sensor Electrodes | 2 | Sweat level detection |
-| 20x4 LCD Display | 1 | Real-time display |
-| SD Card Module | 1 | Data logging |
-| ECG Electrodes (3-lead) | 1 set | ECG signal acquisition |
-| 10kΩ Resistors | 2 | Voltage dividers |
-| 100kΩ Resistor | 1 | GSR circuit |
-| USB Power Bank (5000mAh+) | 1 | 24+ hour power |
-
-**Total Cost:** ~£36 (under £50 budget)
 
 ### Software Setup
 
