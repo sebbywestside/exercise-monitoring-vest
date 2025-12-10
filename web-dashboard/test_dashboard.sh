@@ -14,7 +14,7 @@ echo "   → Realistic simulation with 10-minute loop"
 echo "   → Perfect for demos and development"
 echo ""
 echo "2. Quick Demo (30 seconds)"
-echo "   → Fast preview of all activity phases"
+echo "   → Fast preview of all activity phases"`
 echo "   → Great for screenshots"
 echo ""
 echo "3. Stress Test"
